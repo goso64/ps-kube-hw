@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: conv-app
+  labels:
+    components: frontend
+spec:
+  containers:
+    - name: conv-app
+      image: antonlarichev/conv-app:1.2 
+      ports:
+        - containerPort: 80
+      resources:
+        limits:
+          memory: "1000Mi"
+          cpu: "500m"          
