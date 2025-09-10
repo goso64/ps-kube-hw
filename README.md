@@ -96,3 +96,83 @@ $ curl 192.168.49.2:31201
   </body>
 </html>
 ```
+
+# 5.10. Домашнее задание - Работа с объектами
+
+```bash
+$ cat app-deployment.yaml 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: conv-app-deployment
+spec:
+  replicas: 1 
+  selector:
+    matchLabels:
+      components: frontend
+  template:
+    metadata:
+      name: conv-app
+      labels:
+        components: frontend
+    spec:
+      containers:
+        - name: conv-app
+          image: antonlarichev/conv-app:1.2
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+vg m22: ~/purplescool_kube/ps-kube-hw git(2-deployment)
+$ kaf app-deployment.yaml 
+deployment.apps/conv-app-deployment created
+
+$ kaf node-port.yml 
+service/conv-app-port created
+
+$ kgall
+NAME                                      READY   STATUS    RESTARTS   AGE
+pod/conv-app-deployment-57474565c-gxvc4   1/1     Running   0          15s
+
+NAME                    TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
+service/conv-app-port   NodePort    10.109.127.137   <none>        3000:31200/TCP   3s
+service/kubernetes      ClusterIP   10.96.0.1        <none>        443/TCP          45h
+
+NAME                                  READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/conv-app-deployment   1/1     1            1           15s
+
+NAME                                            DESIRED   CURRENT   READY   AGE
+replicaset.apps/conv-app-deployment-57474565c   1         1         1       15s
+
+
+$ m service conv-app-port --url
+http://192.168.49.2:31200
+```
+
+```html
+$ curl http://192.168.49.2:31200
+<!doctype html>
+<html lang="en">
+  <head>
+    <script type="module">import { injectIntoGlobalHook } from "/@react-refresh";
+injectIntoGlobalHook(window);
+window.$RefreshReg$ = () => {};
+window.$RefreshSig$ = () => (type) => type;</script>
+
+    <script type="module" src="/@vite/client"></script>
+
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + React + TS</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+```
