@@ -266,5 +266,111 @@ window.$RefreshSig$ = () => (type) => type;</script>
 </html>
 ```
 
+## 7.12. Домашнее задание - Volumes
+
+```
+$ git checkout -b 3-volume
+
+vg m22: ~/purplescool_kube/ps-kube-hw git(3-volume)
+$ cat mq-pvc.yaml 
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mq-pvc
+spec:
+  resources:
+    requests:
+      storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+
+$ cat mq-service.yaml 
+apiVersion: v1
+kind: Service
+metadata:
+  name: mq-clusterip
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5672
+      protocol: TCP
+  selector:
+    components: mq
+
+$ cat mq-deployment.yaml 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mq-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      components: mq
+  template:
+    metadata:
+      name: mq
+      labels:
+        components: mq
+    spec:
+      containers:
+        - name: mq
+          image: rabbitmq:4.1.4-management-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5672
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              value: demo
+            - name: RABBITMQ_DEFAULT_PASS
+              value: demo
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          volumeMounts:
+            - mountPath: /var/lib/rabbitmq
+              name: mq-data
+      volumes:
+        - name: mq-data
+          persistentVolumeClaim:
+            claimName: mq-pvc
+
+$ kaf mq-pvc.yaml
+$ kaf mq-service.yaml
+$ kaf mq-deployment.yaml
+
+$ kgall
+NAME                                 READY   STATUS    RESTARTS   AGE
+pod/mq-deployment-574fdb487b-zgt78   1/1     Running   0          18m
+
+NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP   3d12h
+
+NAME                            READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/mq-deployment   1/1     1            1           49m
+
+NAME                                       DESIRED   CURRENT   READY   AGE
+replicaset.apps/mq-deployment-574fdb487b   1         1         1       17m
+
+$ kpf pod/mq-deployment-574fdb487b-zgt78 15672
+```
+
+заход в админку по localhost:15672
+
+```html
+$ curl localhost:15672
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>RabbitMQ Management</title>
+    <script src="js/ejs-1.0.min.js" type="text/javascript"></script>
+...
+    <script src="js/theme-switcher.js"></script>
+  </body>
+</html>
+```
 
 
