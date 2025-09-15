@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mq-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      components: mq
+  template:
+    metadata:
+      name: mq
+      labels:
+        components: mq
+    spec:
+      containers:
+        - name: mq
+          image: rabbitmq:4.1.4-management-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5672
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              value: demo
+            - name: RABBITMQ_DEFAULT_PASS
+              value: demo
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          volumeMounts:
+            - mountPath: /var/lib/rabbitmq
+              name: mq-data
+      volumes:
+        - name: mq-data
+          persistentVolumeClaim:
+            claimName: mq-pvc
+
