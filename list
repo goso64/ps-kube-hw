@@ -1,0 +1,14 @@
+pictures-pvc.yaml
+mq-pvc.yaml
+
+mq-secret.yaml
+
+conv-api-deployment.yaml
+conv-app-deployment.yaml
+mq-deployment.yaml
+
+conv-api-service.yaml
+conv-app-service.yaml
+mq-service.yaml
+
+ingress.yaml

@@ -184,7 +184,6 @@ window.$RefreshSig$ = () => (type) => type;</script>
 192.168.49.2 conv.test
 
 vg m22: ~/purplescool_kube/ps-kube-hw git(2-deployment)
-
 $ cat app-service.yaml 
 apiVersion: v1
 kind: Service
@@ -373,4 +372,129 @@ $ curl localhost:15672
 </html>
 ```
 
+## 8.10. Домашнее задание - Секреты
+
+Создаю секрет mq-secret.yaml
+
+```
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mq-secret
+type: Opaque
+data:
+  SEED_USERNAME: aXRzbWU=
+  SEED_USER_PASSWORD: bXVtdQ==
+```
+
+и меняю в mq-deployment.yaml пароли на секрет:
+
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mq-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      components: mq
+  template:
+    metadata:
+      name: mq
+      labels:
+        components: mq
+    spec:
+      containers:
+        - name: mq
+          image: rabbitmq:4.0.9-management-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5672
+            - containerPort: 15672
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mq-secret
+                  key: SEED_USERNAME
+            - name: RABBITMQ_DEFAULT_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: mq-secret
+                  key: SEED_USER_PASSWORD
+            - name: SEED_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mq-secret
+                  key: SEED_USERNAME
+            - name: SEED_USER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mq-secret
+                  key: SEED_USER_PASSWORD
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "400m"
+          volumeMounts:
+            - name: mq-data
+              mountPath: /var/lib/rabbitmq
+      volumes:
+        - name: mq-data
+          persistentVolumeClaim:
+            claimName: mq-pvc
+```
+
+В API подставляю юзера и пароль из секрета и volume для картинок:
+
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: conv-api-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      components: backend
+  template:
+    metadata:
+      name: conv-api
+      labels:
+        components: backend
+    spec:
+      containers:
+        - name: conv-api
+          image: antonlarichev/conv-api:1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          env:
+            - name: AMQP_EXCHANGE
+              value: "convert"
+            - name: AMQP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mq-secret
+                  key: SEED_USERNAME
+            - name: AMQP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mq-secret
+                  key: SEED_USER_PASSWORD
+            - name: AMQP_HOSTNAME
+              value: "mq-clusterip"
+          volumeMounts:
+            - name: pictures
+              mountPath: /opt/app/uploads
+      volumes:
+        - name: pictures
+          persistentVolumeClaim:
+            claimName: pictures-pvc
+```
 
