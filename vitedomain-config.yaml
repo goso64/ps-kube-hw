@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vitedomain-config
+data:
+  VITE_DOMAIN: "https://conv.test"
+

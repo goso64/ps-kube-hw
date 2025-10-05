@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: conv-api-deployment
+  name: conv-service-deployment
 spec:
   replicas: 1
   selector:
@@ -9,16 +9,16 @@ spec:
       components: backend
   template:
     metadata:
-      name: conv-api
+      name: conv-service
       labels:
         components: backend
     spec:
       containers:
-        - name: conv-api
-          image: antonlarichev/conv-api:1.0
+        - name: conv-service
+          image: antonlarichev/conv-service:1.0
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 8080
+            - containerPort: 8000
           resources:
             limits:
               memory: "256Mi"
@@ -38,10 +38,6 @@ spec:
                   key: SEED_USER_PASSWORD
             - name: AMQP_HOSTNAME
               value: "mq-clusterip"
-          volumeMounts:
-            - name: pictures
-              mountPath: /opt/app/uploads
-      volumes:
-        - name: pictures
-          persistentVolumeClaim:
-            claimName: pictures-pvc
+            - name: AMQP_QUEUE
+              value: "converter"
+

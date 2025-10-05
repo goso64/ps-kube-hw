@@ -498,3 +498,35 @@ spec:
             claimName: pictures-pvc
 ```
 
+## 9.10. Домашнее задание - Эксплуатация
+
+Новые:
+
+Конфиг vitedomain-config.yaml
+Сервис conv-service-service.yaml
+Деплой conv-service-deployment.yaml
+
+Изменения в ingress - добавка:
+
+```
+      - pathType: Prefix
+        path: "/api"
+        backend:
+          service:
+            name: conv-api-clusterip
+            port:
+              number: 8080
+```
+
+Изменения в conv-app-deployment.yaml - добавка конфига:
+
+```
+          env:
+            - name: VITE_DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: vitedomain-config
+                  key: VITE_DOMAIN
+
+```
+

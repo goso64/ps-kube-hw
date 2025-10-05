@@ -23,3 +23,10 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
+          env:
+            - name: VITE_DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: vitedomain-config
+                  key: VITE_DOMAIN
+
