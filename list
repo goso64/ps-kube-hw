@@ -2,13 +2,16 @@ pictures-pvc.yaml
 mq-pvc.yaml
 
 mq-secret.yaml
+vitedomain-config.yaml
 
-conv-api-deployment.yaml
-conv-app-deployment.yaml
 mq-deployment.yaml
+conv-app-deployment.yaml
+conv-api-deployment.yaml
+conv-service-deployment.yaml
 
 conv-api-service.yaml
 conv-app-service.yaml
+conv-service-service.yaml
 mq-service.yaml
 
 ingress.yaml

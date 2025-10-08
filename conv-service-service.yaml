@@ -8,4 +8,4 @@ spec:
     - port: 8000
       protocol: TCP
   selector:
-    components: backend
+    components: converter

@@ -6,12 +6,12 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      components: backend
+      components: converter
   template:
     metadata:
       name: conv-service
       labels:
-        components: backend
+        components: converter
     spec:
       containers:
         - name: conv-service
@@ -40,4 +40,11 @@ spec:
               value: "mq-clusterip"
             - name: AMQP_QUEUE
               value: "converter"
+          volumeMounts:
+            - name: pictures
+              mountPath: /opt/app/uploads
+      volumes:
+        - name: pictures
+          persistentVolumeClaim:
+            claimName: pictures-pvc
 
