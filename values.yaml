@@ -1,3 +1,13 @@
-# Default values for short-service.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
+app:
+  name: conv-app
+  replicas: 1
+  components: frontend
+  image: "antonlarichev/conv-app"
+  tag: "1.2"
+  port: 80
+  limits:
+    memory: "512Mi"
+    cpu: "250m"
+  config:
+    name: vitedomain-config
+    key: VITE_DOMAIN

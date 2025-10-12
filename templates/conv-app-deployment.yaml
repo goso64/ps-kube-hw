@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ .Values.app.name }}-deployment"
+spec:
+  replicas: {{ .Values.app.replicas }}
+  selector:
+    matchLabels:
+      components: {{ .Values.app.components }}
+  template:
+    metadata:
+      labels:
+        components: {{ .Values.app.components }}
+    spec:
+      containers:
+        - name: {{ .Values.app.name }}
+          image: antonlarichev/conv-app:1.2
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          env:
+            - name: VITE_DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: vitedomain-config
+                  key: VITE_DOMAIN
+

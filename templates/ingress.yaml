@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: converter
+  annotations:
+    nginx.ingress.kubernetis.io/add-base-url: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: conv.test
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: {{ .Values.app.name }}-clusterip
+            port:
+              number: {{ .Values.app.port }}
