@@ -14,18 +14,16 @@ spec:
     spec:
       containers:
         - name: {{ .Values.app.name }}
-          image: antonlarichev/conv-app:1.2
+          image: "{{ .Values.app.image.name }}:{{ .Values.app.image.tag }}"
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 80
+            - containerPort: {{ .Values.app.port }}
           resources:
-            limits:
-              memory: "512Mi"
-              cpu: "500m"
+            limits: {{ .Values.app.limits | toYaml | nindent 14 }}
           env:
-            - name: VITE_DOMAIN
+            - name: {{ .Values.app.config.key }}
               valueFrom:
                 configMapKeyRef:
-                  name: vitedomain-config
-                  key: VITE_DOMAIN
+                  name: {{ .Values.app.config.name }}
+                  key: {{ .Values.app.config.key }}
 

@@ -2,8 +2,9 @@ app:
   name: conv-app
   replicas: 1
   components: frontend
-  image: "antonlarichev/conv-app"
-  tag: "1.2"
+  image: 
+    name: "antonlarichev/conv-app"
+    tag: "1.2"
   port: 80
   limits:
     memory: "512Mi"
