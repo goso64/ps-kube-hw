@@ -1,4 +1,3 @@
-icon: file://.icons8-phone-48.png
 apiVersion: v2
 name: converter
 description: Image Converter
