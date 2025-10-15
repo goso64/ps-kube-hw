@@ -8,4 +8,4 @@ spec:
     - port: {{ .Values.app.port }}
       protocol: TCP
   selector:
-    components: frontend
+    components: {{ .Values.app.components }}
