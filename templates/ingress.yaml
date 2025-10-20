@@ -11,9 +11,20 @@ spec:
     http:
       paths:
       - pathType: Prefix
+        {{- with .Values.app }}
         path: "/"
         backend:
           service:
-            name: "{{ .Values.app.name }}-clusterip"
+            name: "{{ .name }}-clusterip"
             port:
-              number: {{ .Values.app.port }}
+              number: {{ .port }}
+        {{- end }}
+      - pathType: Prefix
+        {{- with .Values.api }}
+        path: "/api"
+        backend:
+          service:
+            name: "{{ .name }}-clusterip"
+            port:
+              number: {{ .port }}
+        {{- end -}}

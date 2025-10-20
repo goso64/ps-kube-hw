@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+{{- with .Values.api }} 
+metadata:
+  name: {{ .name }}-deployment
+spec:
+  replicas: {{ .replicas }}
+  selector:
+    matchLabels:
+      components: {{ .components }}
+  template:
+    metadata:
+      name: {{ .name }}
+      labels:
+        components: {{ .components }}
+    spec:
+      containers:
+        - name: {{ .name }}
+          image: "{{ .image.name }}:{{ .image.tag }}"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: {{ .port }}
+          resources:
+            limits: {{ .limits | toYaml | nindent 14 }}
+          env:
+            {{- $rabbit_name := $.Values.rabbit.name }}
+            - name: AMQP_EXCHANGE
+              value: {{ $.Values.rabbit.amqp_exchange }}
+            - name: AMQP_HOSTNAME
+              value: {{ $rabbit_name }}-clusterip
+            - name: AMQP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $rabbit_name }}-secret
+                  key: {{ $.Values.rabbit.key_user }}
+            - name: AMQP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $rabbit_name }}-secret
+                  key: {{ $.Values.rabbit.key_pass }}
+          volumeMounts:
+            - name: {{ .name }}-data
+              mountPath: /opt/app/uploads
+      volumes:
+        - name: {{ .name }}-data
+          persistentVolumeClaim:
+            claimName: {{ .name }}-pvc
+{{- end -}}

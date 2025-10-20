@@ -1,29 +1,30 @@
 apiVersion: apps/v1
 kind: Deployment
+{{- with .Values.app }}
 metadata:
-  name: "{{ .Values.app.name }}-deployment"
+  name: {{ .name }}-deployment
 spec:
-  replicas: {{ .Values.app.replicas }}
+  replicas: {{ .replicas }}
   selector:
     matchLabels:
-      components: {{ .Values.app.components }}
+      components: {{ .components }}
   template:
     metadata:
       labels:
-        components: {{ .Values.app.components }}
+        components: {{ .components }}
     spec:
       containers:
-        - name: {{ .Values.app.name }}
-          image: "{{ .Values.app.image.name }}:{{ .Values.app.image.tag }}"
+        - name: {{ .name }}
+          image: "{{ .image.name }}:{{ .image.tag }}"
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: {{ .Values.app.port }}
+            - containerPort: {{ .port }}
           resources:
-            limits: {{ .Values.app.limits | toYaml | nindent 14 }}
+            limits: {{ .limits | toYaml | nindent 14 }}
           env:
-            - name: {{ .Values.app.config.key }}
+            - name: {{ .config.key }}
               valueFrom:
                 configMapKeyRef:
-                  name: {{ .Values.app.config.name }}
-                  key: {{ .Values.app.config.key }}
-
+                  name: {{ .config.name }}
+                  key: {{ .config.key }}
+{{- end -}}

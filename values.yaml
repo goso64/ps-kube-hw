@@ -12,3 +12,43 @@ app:
   config:
     name: vitedomain-config
     key: VITE_DOMAIN
+
+api:
+  name: conv-api
+  replicas: 1
+  components: backend
+  image: 
+    name: "antonlarichev/conv-app"
+    tag: "1.2"
+  port: 8080
+  limits:
+    memory: "256Mi"
+    cpu: "200m"
+  
+converter:
+  name: converter
+  replicas: 1
+  components: converter
+  image: 
+    name: "antonlarichev/conv-service"
+    tag: "1.0"
+  port: 8000
+  limits:
+    memory: "256Mi"
+    cpu: "200m"
+
+rabbit:
+  name: rabbitmq
+  replicas: 1
+  components: mesquery
+  amqp_exchange: convert
+  image: 
+    name: "rabbitmq"
+    tag: "4.0.9-management-alpine"
+  key_user: SEED_USERNAME
+  key_pass: SEED_USER_PASSWORD
+  port: 5672
+  port_managment: 15672
+  limits:
+    memory: "512Mi"
+    cpu: "200m"

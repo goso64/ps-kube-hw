@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+{{- with .Values.rabbit }}
+metadata:
+  name: {{ .name }}-deployment
+spec:
+  replicas: {{ .replicas }}
+  selector:
+    matchLabels:
+      components: {{ .components }}
+  template:
+    metadata:
+      name: {{ .name }}
+      labels:
+        components: {{ .components }}
+    spec:
+      containers:
+        - name: {{ .name }}
+          image: "{{ .image.name }}:{{ .image.tag }}"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: {{ .port }}
+            - containerPort: {{ .port_managment }}
+          env:
+            {{- $secret := cat .name "-secret" | nospace }}
+            - name: RABBITMQ_DEFAULT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secret }}
+                  key: {{ .key_user }}
+            - name: RABBITMQ_DEFAULT_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secret }}
+                  key: {{ .key_pass }}
+            - name: {{ .key_user }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secret }}
+                  key: {{ .key_user }}
+            - name: {{ .key_pass }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secret }}
+                  key: {{ .key_pass }}
+          resources:
+            limits: {{ .limits | toYaml | nindent 14 }}
+          volumeMounts:
+            - name: {{ .name }}-data
+              mountPath: /var/lib/rabbitmq
+      volumes:
+        - name: {{ .name }}-data
+          persistentVolumeClaim:
+            claimName: {{ .name }}-pvc
+{{- end -}}
