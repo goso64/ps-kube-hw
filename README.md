@@ -102,3 +102,115 @@ spec:
 ## 12.13. Домашнее задание - Продвинутые шаблоны
 
 Добавил шаблоны для api converter mq
+
+```
+vg m22: ~/purplescool_kubehelm/ps-kube-hw git(5-helm-final)
+$ cat templates/conv-converter-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+{{- with .Values.converter }}
+metadata:
+  name: {{ .name }}-deployment
+spec:
+  replicas: {{ .replicas }}
+  selector:
+    matchLabels:
+      components: {{ .components }}
+  template:
+    metadata:
+      name: {{ .name }}
+      labels:
+        components: {{ .components }}
+    spec:
+      containers:
+        - name: {{ .name }}
+          image: "{{ .image.name }}:{{ .image.tag }}"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: {{ .port }}
+          resources:
+            limits: {{ .limits | toYaml | nindent 14 }}
+          env:
+            {{- $rabbit_name := $.Values.rabbit.name }}
+            {{- $rabbit_secret := cat $rabbit_name "-secret" | nospace }}
+            - name: AMQP_EXCHANGE
+              value: {{ $.Values.rabbit.amqp_exchange }}
+            - name: AMQP_HOSTNAME
+              value: {{ $rabbit_name }}-clusterip
+            - name: AMQP_QUEUE
+              value: "converter"
+            - name: AMQP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $rabbit_secret }}
+                  key: SEED_USERNAME
+            - name: AMQP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $rabbit_secret }}
+                  key: SEED_USER_PASSWORD
+          volumeMounts:
+            - name: {{ .name }}-data
+              mountPath: /opt/app/uploads
+      volumes:
+        - name: {{ .name }}-data
+          persistentVolumeClaim:
+            claimName: {{ .name }}-pvc
+{{- end -}}
+
+$ helm template . --debug --show-only templates/conv-converter-deployment.yaml
+install.go:225: 2025-10-20 17:44:29.18302265 +0300 MSK m=+0.039689233 [debug] Original chart version: ""
+install.go:242: 2025-10-20 17:44:29.183349982 +0300 MSK m=+0.040016455 [debug] CHART PATH: /home/vg/purplescool_kubehelm/ps-kube-hw
+
+---
+# Source: converter/templates/conv-converter-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: converter-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      components: converter
+  template:
+    metadata:
+      name: converter
+      labels:
+        components: converter
+    spec:
+      containers:
+        - name: converter
+          image: "antonlarichev/conv-service:1.0"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          resources:
+            limits: 
+              cpu: 200m
+              memory: 256Mi
+          env:
+            - name: AMQP_EXCHANGE
+              value: convert
+            - name: AMQP_HOSTNAME
+              value: rabbitmq-clusterip
+            - name: AMQP_QUEUE
+              value: "converter"
+            - name: AMQP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: SEED_USERNAME
+            - name: AMQP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: SEED_USER_PASSWORD
+          volumeMounts:
+            - name: converter-data
+              mountPath: /opt/app/uploads
+      volumes:
+        - name: converter-data
+          persistentVolumeClaim:
+            claimName: converter-pvc
+```
