@@ -1,0 +1,466 @@
+NAME: converter
+LAST DEPLOYED: Sat Oct 25 21:53:01 2025
+NAMESPACE: default
+STATUS: deployed
+REVISION: 3
+CHART: converter
+VERSION: 0.2.1
+APP_VERSION: 1.0.0
+USER-SUPPLIED VALUES:
+api:
+  components: backend
+  image:
+    name: antonlarichev/conv-app
+    tag: "1.2"
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  name: conv-api
+  port: 8080
+  replicas: 1
+app:
+  components: frontend
+  config:
+    key: VITE_DOMAIN
+    name: vitedomain-config
+  image:
+    name: antonlarichev/conv-app
+    tag: "1.2"
+  limits:
+    cpu: 250m
+    memory: 512Mi
+  name: conv-app
+  port: 80
+  replicas: 1
+converter:
+  components: converter
+  image:
+    name: antonlarichev/conv-service
+    tag: "1.0"
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  name: converter
+  port: 8000
+  replicas: 1
+rabbit:
+  amqp_exchange: convert
+  components: mesquery
+  image:
+    name: rabbitmq
+    tag: 4.0.9-management-alpine
+  key_pass: SEED_USER_PASSWORD
+  key_user: SEED_USERNAME
+  limits:
+    cpu: 200m
+    memory: 512Mi
+  name: rabbitmq
+  pass: mumu
+  port: 5672
+  port_managment: 15672
+  replicas: 1
+  user: itsme
+
+COMPUTED VALUES:
+api:
+  components: backend
+  image:
+    name: antonlarichev/conv-app
+    tag: "1.2"
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  name: conv-api
+  port: 8080
+  replicas: 1
+app:
+  components: frontend
+  config:
+    key: VITE_DOMAIN
+    name: vitedomain-config
+  image:
+    name: antonlarichev/conv-app
+    tag: "1.2"
+  limits:
+    cpu: 250m
+    memory: 512Mi
+  name: conv-app
+  port: 80
+  replicas: 1
+converter:
+  components: converter
+  image:
+    name: antonlarichev/conv-service
+    tag: "1.0"
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  name: converter
+  port: 8000
+  replicas: 1
+rabbit:
+  amqp_exchange: convert
+  components: mesquery
+  image:
+    name: rabbitmq
+    tag: 4.0.9-management-alpine
+  key_pass: SEED_USER_PASSWORD
+  key_user: SEED_USERNAME
+  limits:
+    cpu: 200m
+    memory: 512Mi
+  name: rabbitmq
+  pass: mumu
+  port: 5672
+  port_managment: 15672
+  replicas: 1
+  user: itsme
+
+HOOKS:
+---
+# Source: converter/templates/tests/app.test.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "converter-app-test"
+  labels:
+    components: frontend
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: conv-app-wget
+      image: busybox
+      command: ['wget']
+      args: ['conv-app-clusterip:80']
+  restartPolicy: Never
+MANIFEST:
+---
+# Source: converter/templates/mq-secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rabbitmq-secret
+type: Opaque
+data:
+  SEED_USERNAME: "aXRzbWU="
+  SEED_USER_PASSWORD: "bXVtdQ=="
+---
+# Source: converter/templates/vitedomain-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vitedomain-config
+data:
+  VITE_DOMAIN: "https://conv.test"
+---
+# Source: converter/templates/conv-api-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: conv-api-pvc
+spec:
+  resources:
+    requests:
+      storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+---
+# Source: converter/templates/conv-converter-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: converter-pvc
+spec:
+  resources:
+    requests:
+      storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+---
+# Source: converter/templates/mq-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rabbitmq-pvc
+spec:
+  resources:
+    requests:
+      storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+---
+# Source: converter/templates/conv-api-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: conv-api-clusterip
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      protocol: TCP
+  selector:
+    components: backend
+---
+# Source: converter/templates/conv-app-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: conv-app-clusterip
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      protocol: TCP
+  selector:
+    components: frontend
+---
+# Source: converter/templates/conv-converter-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: converter-clusterip
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      protocol: TCP
+  selector:
+    components: converter
+---
+# Source: converter/templates/mq-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq-clusterip
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5672
+      protocol: TCP
+  selector:
+    components: mesquery
+---
+# Source: converter/templates/conv-api-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment 
+metadata:
+  name: conv-api-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      components: backend
+  template:
+    metadata:
+      name: conv-api
+      labels:
+        components: backend
+    spec:
+      containers:
+        - name: conv-api
+          image: "antonlarichev/conv-app:1.2"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          resources:
+            limits: 
+              cpu: 200m
+              memory: 256Mi
+          env:
+            - name: AMQP_EXCHANGE
+              value: convert
+            - name: AMQP_HOSTNAME
+              value: rabbitmq-clusterip
+            - name: AMQP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: SEED_USERNAME
+            - name: AMQP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: SEED_USER_PASSWORD
+          volumeMounts:
+            - name: conv-api-data
+              mountPath: /opt/app/uploads
+      volumes:
+        - name: conv-api-data
+          persistentVolumeClaim:
+            claimName: conv-api-pvc
+---
+# Source: converter/templates/conv-app-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: conv-app-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      components: frontend
+  template:
+    metadata:
+      labels:
+        components: frontend
+    spec:
+      containers:
+        - name: conv-app
+          image: "antonlarichev/conv-app:1.2"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          resources:
+            limits: 
+              cpu: 250m
+              memory: 512Mi
+          env:
+            - name: VITE_DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: vitedomain-config
+                  key: VITE_DOMAIN
+---
+# Source: converter/templates/conv-converter-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: converter-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      components: converter
+  template:
+    metadata:
+      name: converter
+      labels:
+        components: converter
+    spec:
+      containers:
+        - name: converter
+          image: "antonlarichev/conv-service:1.0"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          resources:
+            limits: 
+              cpu: 200m
+              memory: 256Mi
+          env:
+            - name: AMQP_EXCHANGE
+              value: convert
+            - name: AMQP_HOSTNAME
+              value: rabbitmq-clusterip
+            - name: AMQP_QUEUE
+              value: "converter"
+            - name: AMQP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: SEED_USERNAME
+            - name: AMQP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: SEED_USER_PASSWORD
+          volumeMounts:
+            - name: converter-data
+              mountPath: /opt/app/uploads
+      volumes:
+        - name: converter-data
+          persistentVolumeClaim:
+            claimName: converter-pvc
+---
+# Source: converter/templates/mq-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      components: mesquery
+  template:
+    metadata:
+      name: rabbitmq
+      labels:
+        components: mesquery
+    spec:
+      containers:
+        - name: rabbitmq
+          image: "rabbitmq:4.0.9-management-alpine"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5672
+            - containerPort: 15672
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: SEED_USERNAME
+            - name: RABBITMQ_DEFAULT_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: SEED_USER_PASSWORD
+            - name: SEED_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: SEED_USERNAME
+            - name: SEED_USER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: SEED_USER_PASSWORD
+          resources:
+            limits: 
+              cpu: 200m
+              memory: 512Mi
+          volumeMounts:
+            - name: rabbitmq-data
+              mountPath: /var/lib/rabbitmq
+      volumes:
+        - name: rabbitmq-data
+          persistentVolumeClaim:
+            claimName: rabbitmq-pvc
+---
+# Source: converter/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: converter
+  annotations:
+    nginx.ingress.kubernetes.io/add-base-url: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: conv.test
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: "conv-app-clusterip"
+            port:
+              number: 80
+      - pathType: Prefix
+        path: "/api"
+        backend:
+          service:
+            name: "conv-api-clusterip"
+            port:
+              number: 8080
+
+NOTES:
+You run chart converter 0.2.1, application version is 1.0.0
+Your release is named converter
+To learn more about the release, try:
+  $ helm status converter
+  $ helm get all converter

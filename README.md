@@ -214,3 +214,11 @@ spec:
           persistentVolumeClaim:
             claimName: converter-pvc
 ```
+
+## 14.10. Домашнее задание - Использование Charts
+
+- Добавляем Notes.txt
+- Пишем тест на проверку работы APP приложения
+- Шифруем секреты
+
+
