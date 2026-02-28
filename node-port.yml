@@ -5,8 +5,8 @@ metadata:
 spec:
   type: NodePort
   ports:
-    - port: 3001
+    - port: 3000
       targetPort: 80
-      nodePort: 31201
+      nodePort: 31200
   selector:
     components: frontend

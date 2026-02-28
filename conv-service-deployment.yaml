@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: conv-service-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      components: converter
+  template:
+    metadata:
+      name: conv-service
+      labels:
+        components: converter
+    spec:
+      containers:
+        - name: conv-service
+          image: antonlarichev/conv-service:1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          resources:
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          env:
+            - name: AMQP_EXCHANGE
+              value: "convert"
+            - name: AMQP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mq-secret
+                  key: SEED_USERNAME
+            - name: AMQP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mq-secret
+                  key: SEED_USER_PASSWORD
+            - name: AMQP_HOSTNAME
+              value: "mq-clusterip"
+            - name: AMQP_QUEUE
+              value: "converter"
+          volumeMounts:
+            - name: pictures
+              mountPath: /opt/app/uploads
+      volumes:
+        - name: pictures
+          persistentVolumeClaim:
+            claimName: pictures-pvc
+
